@@ -1,0 +1,101 @@
+
+
+
+(6TH QUESTION)
+
+#include <stdio.h>
+
+// Structure to represent a process
+typedef struct {
+    int pid;            // Process ID
+    int arrival_time;   // Arrival time
+    int burst_time;     // Burst time
+    int priority;       // Priority (lower value indicates higher priority)
+    int remaining_time; // Remaining burst time
+} Process;
+
+// Function to find the process with the highest priority
+int findHighestPriority(Process processes[], int n, int current_time) {
+    int highest_priority_index = -1;
+    int highest_priority = INT_MAX;
+
+    for (int i = 0; i < n; i++) {
+        if (processes[i].arrival_time <= current_time && processes[i].priority < highest_priority && processes[i].remaining_time > 0) {
+            highest_priority_index = i;
+            highest_priority = processes[i].priority;
+        }
+    }
+
+    return highest_priority_index;
+}
+
+// Function to calculate average waiting time
+float calculateAverageWaitingTime(Process processes[], int n) {
+    int total_waiting_time = 0;
+    int current_time = 0;
+
+    // Process remaining_time is initialized with burst time
+    for (int i = 0; i < n; i++) {
+        processes[i].remaining_time = processes[i].burst_time;
+    }
+
+    while (1) {
+        // Find the process with the highest priority
+        int highest_priority_index = findHighestPriority(processes, n, current_time);
+        
+        if (highest_priority_index == -1) {
+            break;
+        }
+
+        // Update current time by 1 time unit
+        current_time++;
+
+        // Reduce remaining time of the current process
+        processes[highest_priority_index].remaining_time--;
+
+        // If the process has completed execution
+        if (processes[highest_priority_index].remaining_time == 0) {
+            // Calculate waiting time for the process
+            int waiting_time = current_time - processes[highest_priority_index].arrival_time - processes[highest_priority_index].burst_time;
+            total_waiting_time += waiting_time;
+        }
+    }
+
+    return (float)total_waiting_time / n;
+}
+
+int main() {
+    int n;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    // Create an array to store processes
+    Process processes[n];
+
+    // Input process details
+    printf("Enter arrival time, burst time, and priority for each process:\n");
+    for (int i = 0; i < n; i++) {
+        printf("Process %d:\n", i + 1);
+        printf("Arrival time: ");
+        scanf("%d", &processes[i].arrival_time);
+        printf("Burst time: ");
+        scanf("%d", &processes[i].burst_time);
+        printf("Priority: ");
+        scanf("%d", &processes[i].priority);
+        processes[i].pid = i + 1;
+    }
+
+    // Calculate and display average waiting time
+    float avg_waiting_time = calculateAverageWaitingTime(processes, n);
+    printf("Average waiting time: %.2f\n", avg_waiting_time);
+
+    return 0;
+}
+
+
+
+
+
+
+
+

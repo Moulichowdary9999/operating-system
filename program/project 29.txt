@@ -1,0 +1,98 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
+#define NUM_READERS 5
+#define NUM_WRITERS 2
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond_readers = PTHREAD_COND_INITIALIZER;
+pthread_cond_t cond_writers = PTHREAD_COND_INITIALIZER;
+
+int readers_active = 0;
+int readers_waiting = 0;
+int writers_waiting = 0;
+int data = 0;
+
+void *reader(void *arg) {
+    while (1) {
+        pthread_mutex_lock(&mutex);
+        while (writers_waiting > 0 || readers_active == -1) {
+            readers_waiting++;
+            pthread_cond_wait(&cond_readers, &mutex);
+            readers_waiting--;
+        }
+        readers_active++;
+        pthread_mutex_unlock(&mutex);
+
+        // Read data
+        printf("Reader reads data: %d\n", data);
+        usleep(1000000); // Sleep for 1 second
+
+        pthread_mutex_lock(&mutex);
+        readers_active--;
+        if (readers_active == 0) {
+            pthread_cond_signal(&cond_writers);
+        }
+        pthread_mutex_unlock(&mutex);
+
+        usleep(1000000); // Sleep for 1 second before reading again
+    }
+}
+
+void *writer(void *arg) {
+    while (1) {
+        pthread_mutex_lock(&mutex);
+        while (readers_active > 0 || writers_waiting > 0) {
+            writers_waiting++;
+            pthread_cond_wait(&cond_writers, &mutex);
+            writers_waiting--;
+        }
+        readers_active = -1;
+        pthread_mutex_unlock(&mutex);
+
+        // Write data
+        data++;
+        printf("Writer writes data: %d\n", data);
+        usleep(2000000); // Sleep for 2 seconds
+
+        pthread_mutex_lock(&mutex);
+        readers_active = 0;
+        if (readers_waiting > 0) {
+            pthread_cond_broadcast(&cond_readers);
+        } else {
+            pthread_cond_signal(&cond_writers);
+        }
+        pthread_mutex_unlock(&mutex);
+
+        usleep(2000000); // Sleep for 2 seconds before writing again
+    }
+}
+
+int main() {
+    pthread_t readers[NUM_READERS], writers[NUM_WRITERS];
+    
+    // Create reader threads
+    for (int i = 0; i < NUM_READERS; i++) {
+        pthread_create(&readers[i], NULL, reader, NULL);
+    }
+    
+    // Create writer threads
+    for (int i = 0; i < NUM_WRITERS; i++) {
+        pthread_create(&writers[i], NULL, writer, NULL);
+    }
+    
+    // Join reader threads
+    for (int i = 0; i < NUM_READERS; i++) {
+        pthread_join(readers[i], NULL);
+    }
+    
+    // Join writer threads
+    for (int i = 0; i < NUM_WRITERS; i++) {
+        pthread_join(writers[i], NULL);
+    }
+    
+    return 0;
+}
+

@@ -1,0 +1,132 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MEMORY_SIZE 1000 // Total size of memory
+
+// Memory block structure
+struct memory_block {
+    int id;
+    int size;
+    int allocated;
+};
+
+// Function prototypes
+void initialize_memory();
+void allocate_first_fit(int process_id, int size);
+void allocate_best_fit(int process_id, int size);
+void allocate_worst_fit(int process_id, int size);
+void deallocate(int process_id);
+void display_memory();
+
+// Global variables
+struct memory_block memory[MEMORY_SIZE];
+int num_processes = 0;
+
+int main() {
+    initialize_memory();
+
+    allocate_first_fit(1, 200);
+    allocate_first_fit(2, 100);
+    allocate_first_fit(3, 300);
+
+    display_memory();
+
+    deallocate(2);
+    allocate_best_fit(4, 150);
+
+    display_memory();
+
+    deallocate(1);
+    allocate_worst_fit(5, 250);
+
+    display_memory();
+
+    return 0;
+}
+
+// Initialize memory with one large block
+void initialize_memory() {
+    memory[0].id = -1;
+    memory[0].size = MEMORY_SIZE;
+    memory[0].allocated = 0;
+}
+
+// Allocate memory using First Fit strategy
+void allocate_first_fit(int process_id, int size) {
+    int i;
+    for (i = 0; i < MEMORY_SIZE; i++) {
+        if (!memory[i].allocated && memory[i].size >= size) {
+            memory[i].id = process_id;
+            memory[i].allocated = 1;
+            printf("Process %d allocated at position %d\n", process_id, i);
+            break;
+        }
+    }
+    if (i == MEMORY_SIZE) {
+        printf("Error: Not enough memory for process %d\n", process_id);
+    }
+}
+
+// Allocate memory using Best Fit strategy
+void allocate_best_fit(int process_id, int size) {
+    int i, best_fit_index = -1, min_remaining_size = MEMORY_SIZE;
+    for (i = 0; i < MEMORY_SIZE; i++) {
+        if (!memory[i].allocated && memory[i].size >= size && memory[i].size - size < min_remaining_size) {
+            best_fit_index = i;
+            min_remaining_size = memory[i].size - size;
+        }
+    }
+    if (best_fit_index != -1) {
+        memory[best_fit_index].id = process_id;
+        memory[best_fit_index].allocated = 1;
+        printf("Process %d allocated at position %d\n", process_id, best_fit_index);
+    } else {
+        printf("Error: Not enough memory for process %d\n", process_id);
+    }
+}
+
+// Allocate memory using Worst Fit strategy
+void allocate_worst_fit(int process_id, int size) {
+    int i, worst_fit_index = -1, max_remaining_size = -1;
+    for (i = 0; i < MEMORY_SIZE; i++) {
+        if (!memory[i].allocated && memory[i].size >= size && memory[i].size - size > max_remaining_size) {
+            worst_fit_index = i;
+            max_remaining_size = memory[i].size - size;
+        }
+    }
+    if (worst_fit_index != -1) {
+        memory[worst_fit_index].id = process_id;
+        memory[worst_fit_index].allocated = 1;
+        printf("Process %d allocated at position %d\n", process_id, worst_fit_index);
+    } else {
+        printf("Error: Not enough memory for process %d\n", process_id);
+    }
+}
+
+// Deallocate memory for a process
+void deallocate(int process_id) {
+    int i;
+    for (i = 0; i < MEMORY_SIZE; i++) {
+        if (memory[i].id == process_id) {
+            memory[i].id = -1;
+            memory[i].allocated = 0;
+            printf("Process %d deallocated from position %d\n", process_id, i);
+        }
+    }
+}
+
+// Display memory allocation status
+void display_memory() {
+    printf("Memory Status:\n");
+    printf("--------------\n");
+    for (int i = 0; i < MEMORY_SIZE; i++) {
+        if (memory[i].allocated) {
+            printf("| P%d ", memory[i].id);
+        } else {
+            printf("|    ");
+        }
+    }
+    printf("|\n");
+    printf("--------------\n");
+}
+

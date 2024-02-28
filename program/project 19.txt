@@ -1,0 +1,53 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+
+#define NUM_THREADS 2
+#define COUNT_MAX 10
+
+int count = 0;
+pthread_mutex_t mutex;
+
+void *increment_counter(void *thread_id) {
+    int i;
+    long tid;
+    tid = (long)thread_id;
+    for (i = 0; i < COUNT_MAX; i++) {
+        pthread_mutex_lock(&mutex);
+        count++;
+        printf("Thread %ld: count = %d\n", tid, count);
+        pthread_mutex_unlock(&mutex);
+    }
+    pthread_exit(NULL);
+}
+
+int main() {
+    pthread_t threads[NUM_THREADS];
+    int rc;
+    long t;
+    
+    // Initialize mutex
+    pthread_mutex_init(&mutex, NULL);
+
+    // Create threads
+    for (t = 0; t < NUM_THREADS; t++) {
+        printf("Creating thread %ld\n", t);
+        rc = pthread_create(&threads[t], NULL, increment_counter, (void *)t);
+        if (rc) {
+            printf("Error: return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+    }
+
+    // Wait for all threads to finish
+    for (t = 0; t < NUM_THREADS; t++) {
+        pthread_join(threads[t], NULL);
+    }
+
+    // Destroy mutex
+    pthread_mutex_destroy(&mutex);
+
+    printf("Final count: %d\n", count);
+    pthread_exit(NULL);
+}
+

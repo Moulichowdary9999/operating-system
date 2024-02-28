@@ -1,0 +1,43 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    FILE *file;
+
+    // Create a new file and write data to it
+    file = fopen("example.txt", "w");
+    if (file == NULL) {
+        printf("Error: Unable to create file.\n");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(file, "This is a test file.\n");
+    fclose(file);
+    printf("File created successfully.\n");
+
+    // Open an existing file for reading
+    file = fopen("example.txt", "r");
+    if (file == NULL) {
+        printf("Error: Unable to open file.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Read data from the file and print it
+    char buffer[100];
+    while (fgets(buffer, sizeof(buffer), file) != NULL) {
+        printf("Data read from file: %s", buffer);
+    }
+    fclose(file);
+
+    // Append additional data to the file
+    file = fopen("example.txt", "a");
+    if (file == NULL) {
+        printf("Error: Unable to open file.\n");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(file, "This is additional data.\n");
+    fclose(file);
+    printf("Additional data appended to the file.\n");
+
+    return 0;
+}
+

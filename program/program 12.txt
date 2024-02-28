@@ -1,0 +1,92 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
+#define NUM_PHILOSOPHERS 5
+#define NUM_EATING 3 // Number of times a philosopher eats
+
+pthread_mutex_t forks[NUM_PHILOSOPHERS];
+pthread_t philosophers[NUM_PHILOSOPHERS];
+
+// Function prototypes
+void *philosopher(void *arg);
+void grab_forks(int philosopher_id);
+void put_away_forks(int philosopher_id);
+void think(int philosopher_id);
+void eat(int philosopher_id);
+
+int main() {
+    int i;
+    // Initialize mutex locks for each fork
+    for (i = 0; i < NUM_PHILOSOPHERS; i++) {
+        pthread_mutex_init(&forks[i], NULL);
+    }
+
+    // Create philosopher threads
+    for (i = 0; i < NUM_PHILOSOPHERS; i++) {
+        pthread_create(&philosophers[i], NULL, philosopher, (void *)(intptr_t)i);
+    }
+
+    // Join philosopher threads
+    for (i = 0; i < NUM_PHILOSOPHERS; i++) {
+        pthread_join(philosophers[i], NULL);
+    }
+
+    // Destroy mutex locks
+    for (i = 0; i < NUM_PHILOSOPHERS; i++) {
+        pthread_mutex_destroy(&forks[i]);
+    }
+
+    return 0;
+}
+
+void *philosopher(void *arg) {
+    int philosopher_id = (intptr_t)arg;
+    int i;
+    for (i = 0; i < NUM_EATING; i++) {
+        think(philosopher_id);
+        grab_forks(philosopher_id);
+        eat(philosopher_id);
+        put_away_forks(philosopher_id);
+    }
+    return NULL;
+}
+
+void grab_forks(int philosopher_id) {
+    int left_fork = philosopher_id;
+    int right_fork = (philosopher_id + 1) % NUM_PHILOSOPHERS;
+
+    // Deadlock prevention by ensuring that a philosopher picks up forks in a specific order
+    if (left_fork < right_fork) {
+        pthread_mutex_lock(&forks[left_fork]);
+        pthread_mutex_lock(&forks[right_fork]);
+    } else {
+        pthread_mutex_lock(&forks[right_fork]);
+        pthread_mutex_lock(&forks[left_fork]);
+    }
+    
+    printf("Philosopher %d is grabbing forks.\n", philosopher_id);
+}
+
+void put_away_forks(int philosopher_id) {
+    int left_fork = philosopher_id;
+    int right_fork = (philosopher_id + 1) % NUM_PHILOSOPHERS;
+
+    // Release forks in reverse order to prevent deadlock
+    pthread_mutex_unlock(&forks[right_fork]);
+    pthread_mutex_unlock(&forks[left_fork]);
+
+    printf("Philosopher %d is putting away forks.\n", philosopher_id);
+}
+
+void think(int philosopher_id) {
+    printf("Philosopher %d is thinking.\n", philosopher_id);
+    sleep(rand() % 3 + 1); // Simulate thinking time
+}
+
+void eat(int philosopher_id) {
+    printf("Philosopher %d is eating.\n", philosopher_id);
+    sleep(rand() % 3 + 1); // Simulate eating time
+}
+

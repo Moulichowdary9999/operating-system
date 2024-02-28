@@ -1,0 +1,139 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_FILENAME_LENGTH 50
+#define MAX_DIR_NAME_LENGTH 50
+#define MAX_FILES_PER_DIR 100
+
+// Structure to represent a file
+struct File {
+    char name[MAX_FILENAME_LENGTH];
+};
+
+// Structure to represent a directory
+struct Directory {
+    char name[MAX_DIR_NAME_LENGTH];
+    struct File files[MAX_FILES_PER_DIR];
+    int num_files;
+};
+
+// Function prototypes
+void create_directory(struct Directory *parent_dir, const char *dir_name);
+void create_file(struct Directory *parent_dir, const char *file_name);
+void delete_file(struct Directory *parent_dir, const char *file_name);
+void list_files(struct Directory *dir);
+void list_directories(struct Directory *dir);
+
+int main() {
+    struct Directory root_dir;
+    strcpy(root_dir.name, "Root");
+    root_dir.num_files = 0;
+
+    int choice;
+    char dir_name[MAX_DIR_NAME_LENGTH];
+    char file_name[MAX_FILENAME_LENGTH];
+
+    while (1) {
+        printf("\n1. Create directory\n");
+        printf("2. Create file\n");
+        printf("3. Delete file\n");
+        printf("4. List files in directory\n");
+        printf("5. List directories\n");
+        printf("6. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                printf("Enter the name of the directory to create: ");
+                scanf("%s", dir_name);
+                create_directory(&root_dir, dir_name);
+                break;
+            case 2:
+                printf("Enter the name of the file to create: ");
+                scanf("%s", file_name);
+                create_file(&root_dir, file_name);
+                break;
+            case 3:
+                printf("Enter the name of the file to delete: ");
+                scanf("%s", file_name);
+                delete_file(&root_dir, file_name);
+                break;
+            case 4:
+                list_files(&root_dir);
+                break;
+            case 5:
+                list_directories(&root_dir);
+                break;
+            case 6:
+                printf("Exiting...\n");
+                exit(0);
+            default:
+                printf("Invalid choice! Please enter a number between 1 and 6.\n");
+        }
+    }
+
+    return 0;
+}
+
+// Create a directory within the parent directory
+void create_directory(struct Directory *parent_dir, const char *dir_name) {
+    // Check if parent directory has space for the new directory
+    if (parent_dir->num_files < MAX_FILES_PER_DIR) {
+        struct Directory new_dir;
+        strcpy(new_dir.name, dir_name);
+        new_dir.num_files = 0;
+        parent_dir->files[parent_dir->num_files++] = new_dir;
+        printf("Directory '%s' created successfully.\n", dir_name);
+    } else {
+        printf("Error: Cannot create directory '%s'. Maximum files per directory reached.\n", dir_name);
+    }
+}
+
+// Create a file within the directory
+void create_file(struct Directory *parent_dir, const char *file_name) {
+    // Check if directory has space for the new file
+    if (parent_dir->num_files < MAX_FILES_PER_DIR) {
+        struct File new_file;
+        strcpy(new_file.name, file_name);
+        parent_dir->files[parent_dir->num_files++] = new_file;
+        printf("File '%s' created successfully.\n", file_name);
+    } else {
+        printf("Error: Cannot create file '%s'. Maximum files per directory reached.\n", file_name);
+    }
+}
+
+// Delete a file from the directory
+void delete_file(struct Directory *parent_dir, const char *file_name) {
+    int i;
+    for (i = 0; i < parent_dir->num_files; i++) {
+        if (strcmp(parent_dir->files[i].name, file_name) == 0) {
+            // Shift remaining files to the left to fill the gap
+            for (int j = i; j < parent_dir->num_files - 1; j++) {
+                parent_dir->files[j] = parent_dir->files[j + 1];
+            }
+            parent_dir->num_files--;
+            printf("File '%s' deleted successfully.\n", file_name);
+            return;
+        }
+    }
+    printf("Error: File '%s' not found in directory.\n", file_name);
+}
+
+// List files in the directory
+void list_files(struct Directory *dir) {
+    printf("Files in directory '%s':\n", dir->name);
+    for (int i = 0; i < dir->num_files; i++) {
+        printf("- %s\n", dir->files[i].name);
+    }
+}
+
+// List sub-directories in the directory
+void list_directories(struct Directory *dir) {
+    printf("Directories in directory '%s':\n", dir->name);
+    for (int i = 0; i < dir->num_files; i++) {
+        printf("- %s\n", dir->files[i].name);
+    }
+}
+
